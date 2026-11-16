@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Founders' Calendar · Iron Lady</title>
+<style>
+  :root { --ink:#1c1b1f; --muted:#67646d; --line:#e6e3ea; --bg:#f8f7fa; --card:#fff; --accent:#7a1f3d; --accent-2:#f6e9ef; --ok:#1d6b45; --ok-bg:#e7f4ec; --err:#a8261b; --err-bg:#fdecea; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 22px 16px 56px; }
+  .brand { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  h1 { font-size: 24px; margin: 4px 0; }
+  h2 { font-size: 16px; margin: 0 0 12px; display: flex; align-items: center; }
+  h3.dayhead { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 4px; }
+  h3.dayhead:first-child { margin-top: 0; }
+  p { margin: 6px 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 12px 0; }
+  .step-n { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; margin-right: 8px; flex: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 8px 14px; cursor: pointer; font: inherit; color: inherit; text-align: left; }
+  .chip small { display: block; color: var(--muted); font-size: 12px; }
+  .chip.on { border-color: var(--accent); background: var(--accent-2); color: var(--accent); font-weight: 600; }
+  .days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+  .day { min-width: 58px; text-align: center; border: 1px solid var(--line); border-radius: 10px; padding: 6px 4px; background: #fff; cursor: pointer; font: inherit; color: inherit; line-height: 1.2; }
+  .day b { display: block; font-size: 18px; margin: 2px 0; }
+  .day.on { border-color: var(--accent); background: var(--accent-2); color: var(--accent); }
+  .day:disabled { opacity: .35; cursor: not-allowed; }
+  .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 10px; }
+  .slot { border: 1px solid var(--line); border-radius: 8px; padding: 8px 0; background: #fff; cursor: pointer; font: inherit; color: inherit; }
+  .slot.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+  input, select, textarea { width: 100%; font: inherit; padding: 9px 10px; border: 1px solid #d5d1db; border-radius: 8px; background: #fff; color: inherit; }
+  textarea { min-height: 84px; resize: vertical; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+  .check { display: flex; gap: 8px; align-items: center; font-weight: 400; font-size: 14px; margin-top: 14px; }
+  .check input { width: auto; margin: 0; }
+  .btn { display: inline-block; margin-top: 14px; background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 11px 20px; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.ghost { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  .linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; }
+  .note { border-radius: 10px; padding: 12px 14px; margin: 12px 0 0; }
+  .note.ok { background: var(--ok-bg); color: var(--ok); }
+  .note.err { background: var(--err-bg); color: var(--err); }
+  .note.info { background: #f1eff4; color: var(--ink); }
+  .tabs { display: flex; gap: 4px; margin: 16px 0 0; box-shadow: inset 0 -1px 0 var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .tab { border: 0; background: none; padding: 10px 12px; font: inherit; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+  .tab.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .item { display: flex; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .dayhead + .item { border-top: 0; }
+  .item .time { min-width: 118px; font-weight: 600; font-size: 14px; }
+  .item.gone { opacity: .5; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: #efedf2; color: var(--muted); margin-left: 6px; font-weight: 400; }
+  .hidden { display: none !important; }
+  .spinner { color: var(--muted); padding: 8px 0; }
+  details.custom { margin-top: 14px; }
+  details.custom summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+  footer { margin-top: 18px; }
+  @media (max-width: 560px) { .item { flex-direction: column; gap: 2px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Iron Lady · Founders' Calendar</div>
+    <h1 id="h-title">Loading…</h1>
+    <p id="h-sub" class="muted"></p>
+  </header>
+  <nav id="tabs" class="tabs hidden"></nav>
+  <main id="app"><div class="spinner">Loading…</div></main>
+  <footer id="foot" class="muted small"></footer>
+</div>
+<script type="application/json" id="boot"><?!= boot ?></script>
+<script>
+// This one file runs in two places. Served by Apps Script, the server fills in "boot" above and
+// google.script.run is there. As the GitHub Pages copy, it reads the link from the address and
+// posts to the web app instead, which works whatever Google accounts the visitor is signed in to.
+var API_URL = 'https://script.google.com/macros/s/AKfycbwgX8x1CHmmcZcGkJ-sllcJV05Z4FPR1Xc4jFiGq8mz5RY72m0XNy31wQLSSDoZ4kqSeQ/exec';
+var ON_GOOGLE = !!(window.google && google.script && google.script.run);
+var BOOT = readBoot();
+var CFG = null;
+
+function readBoot() {
+  try {
+    var b = JSON.parse(document.getElementById('boot').textContent);
+    if (b && b.mode) return b;
+  } catch (e) {}
+  var q = new URLSearchParams(location.search);
+  var key = (q.get('k') || '').trim(), token = (q.get('cancel') || '').trim();
+  return { key: key, token: token, mode: token ? 'cancel' : (key ? 'check' : 'invalid'), schedulerName: "Founders' Office" };
+}
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function note(kind, html) { return '<div class="note ' + kind + '">' + html + '</div>'; }
+function each(list, fn) { Array.prototype.forEach.call(list, fn); }
+function store(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem('fc-' + k) || '';
+    localStorage.setItem('fc-' + k, v);
+  } catch (e) { return ''; }
+}
+function setHead(title, sub) {
+  $('h-title').textContent = title;
+  $('h-sub').textContent = sub || '';
+  document.title = title + ' · Iron Lady';
+}
+
+var OFFLINE = 'Could not reach the calendar. Check your connection and try again.';
+
+function call(action, payload) {
+  if (ON_GOOGLE) {
+    return new Promise(function (resolve) {
+      google.script.run
+        .withSuccessHandler(function (res) { resolve(res || {}); })
+        .withFailureHandler(function (err) { resolve({ error: (err && err.message) || OFFLINE }); })
+        .api(BOOT.key, action, payload || {});
+    });
+  }
+  // Plain-text body: a "simple" request, so no preflight; no cookies, so no Google sign-in involved.
+  return fetch(API_URL, {
+    method: 'POST', credentials: 'omit', redirect: 'follow',
+    body: JSON.stringify({ key: BOOT.key, action: action, payload: payload || {} })
+  }).then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function (res) { return res || {}; }, function () { return { error: OFFLINE }; });
+}
+
+function tabs(list) {
+  var nav = $('tabs');
+  nav.classList.remove('hidden');
+  nav.innerHTML = list.map(function (t, i) { return '<button class="tab" data-i="' + i + '">' + esc(t.label) + '</button>'; }).join('');
+  function show(i) {
+    each(nav.children, function (b, j) { b.classList.toggle('on', i === j); });
+    list[i].render($('app'));
+  }
+  nav.onclick = function (e) { var b = e.target.closest('.tab'); if (b) show(+b.getAttribute('data-i')); };
+  show(0);
+}
+
+function card(n, title, body) {
+  return '<section class="card"><h2>' + (n ? '<span class="step-n">' + n + '</span>' : '') + esc(title) + '</h2>' + body + '</section>';
+}
+
+function whoChips(withBoth) {
+  var html = CFG.founders.map(function (f) {
+    return '<button class="chip" data-who="' + esc(f.key) + '">' + esc(f.name) + '<small>' + esc(f.title) + '</small></button>';
+  }).join('');
+  if (withBoth && CFG.founders.length > 1) {
+    html += '<button class="chip" data-who="*">Both<small>' + esc(CFG.founders.map(function (f) { return f.first; }).join(' & ')) + '</small></button>';
+  }
+  return html;
+}
+
+function pickWho(container, onPick) {
+  container.onclick = function (e) {
+    var b = e.target.closest('[data-who]');
+    if (!b) return;
+    var k = b.getAttribute('data-who');
+    each(container.children, function (c) { c.classList.toggle('on', c === b); });
+    onPick(k === '*' ? CFG.founders.map(function (f) { return f.key; }) : [k]);
+  };
+  if (CFG.founders.length === 1) container.children[0].click();
+}
+
+/* ---------- Book a meeting (team and scheduler) ---------- */
+
+function bookView(root, mode) {
+  var sched = mode === 'scheduler';
+  var st = { keys: [], dur: CFG.defaultDuration, day: null, slot: null, days: null, seq: 0 };
+  var durChips = CFG.durations.map(function (d) {
+    return '<button class="chip' + (d === st.dur ? ' on' : '') + '" data-dur="' + d + '">' + d + ' min</button>';
+  }).join('');
+  var types = CFG.meetingTypes.map(function (t) { return '<option value="' + esc(t.key) + '">' + esc(t.label) + '</option>'; }).join('');
+  var teams = (CFG.teams || []).map(function (t) { return '<option value="' + esc(t) + '">'; }).join('');
+  var details = sched
+    ? '<label for="b-topic">Title</label><input id="b-topic" maxlength="90" placeholder="e.g. Partner call with …">' +
+      '<label for="b-agenda">Agenda or notes (optional)</label><textarea id="b-agenda" maxlength="2000"></textarea>'
+    : '<div class="row2"><div><label for="b-name">Your name</label><input id="b-name" autocomplete="name" maxlength="80"></div>' +
+      '<div><label for="b-email">Your work email</label><input id="b-email" type="email" autocomplete="email" maxlength="120" placeholder="name@' + esc(CFG.domain) + '"></div></div>' +
+      '<label for="b-team">Your team</label><input id="b-team" list="b-teams" maxlength="60"><datalist id="b-teams">' + teams + '</datalist>' +
+      '<label for="b-topic">Topic</label><input id="b-topic" maxlength="90" placeholder="e.g. December LEP batch plan">' +
+      '<label for="b-agenda">What do you need from the meeting?</label><textarea id="b-agenda" maxlength="2000" placeholder="A line or two, so they can prepare"></textarea>';
+  details += '<div class="row2"><div><label for="b-type">Meeting type</label><select id="b-type">' + types + '</select></div>' +
+    '<div id="b-link-wrap" class="hidden"><label for="b-link" id="b-link-label">Link</label><input id="b-link" maxlength="300"></div></div>';
+  details += sched
+    ? '<div class="row2"><div><label for="b-name">Asked for by (optional)</label><input id="b-name" maxlength="80"></div>' +
+      '<div><label for="b-email">Their email (optional, they get the invite)</label><input id="b-email" type="email" maxlength="120"></div></div>' +
+      '<label for="b-others">Other guests (optional, any email)</label><input id="b-others" placeholder="Separate emails with commas">' +
+      '<label class="check"><input type="checkbox" id="b-invite" checked> Send the invite to the founders</label>'
+    : '<label for="b-others">Other team members to invite (optional)</label><input id="b-others" placeholder="Separate emails with commas">';
+
+  root.innerHTML =
+    card('1', 'Who do you need?', '<div class="chips" id="b-who">' + whoChips(true) + '</div>') +
+    card('2', 'How long?', '<div class="chips" id="b-dur">' + durChips + '</div>' +
+      (sched ? '<div class="row2"><div><label for="b-durx">Other length (minutes)</label><input id="b-durx" type="number" min="5" max="720" step="5" placeholder="e.g. 150"></div></div>' : '')) +
+    card('3', 'Pick a time', '<div id="b-when" class="muted small">Choose who and how long first.</div>' +
+      (sched ? '<details class="custom" id="b-custom"><summary>Or type a date and time</summary>' +
+        '<div class="row2"><div><label for="b-cdate">Date</label><input type="date" id="b-cdate" min="' + esc(CFG.today) + '"></div>' +
+        '<div><label for="b-ctime">Start</label><input type="time" id="b-ctime" step="300"></div></div>' +
+        '<p class="muted small">A typed time is checked for clashes, and you can still book over one.</p></details>' : '')) +
+    card('4', 'Details', details + '<div id="b-msg"></div><button class="btn" id="b-go">Book</button>');
+
+  if (!sched) {
+    $('b-name').value = store('name'); $('b-email').value = store('email'); $('b-team').value = store('team');
+  }
+
+  function loadSlots() {
+    st.slot = null;
+    if (!st.keys.length || !st.dur) return;
+    var seq = ++st.seq;
+    $('b-when').className = '';
+    $('b-when').innerHTML = '<div class="spinner">Finding free times…</div>';
+    call('slots', { founders: st.keys, duration: st.dur }).then(function (res) {
+      if (seq !== st.seq) return;
+      if (res.error) { $('b-when').innerHTML = note('err', esc(res.error)); return; }
+      st.days = res.days;
+      var stillFree = st.days.some(function (d) { return d.key === st.day && d.slots.length; });
+      if (!stillFree) {
+        var first = st.days.filter(function (d) { return d.slots.length; })[0];
+        st.day = first ? first.key : null;
+      }
+      drawDays();
+    });
+  }
+
+  function drawDays() {
+    var el = $('b-when');
+    if (!st.day) {
+      el.innerHTML = note('info', 'No free times in the next ' + (st.days.length - 1) + ' days for this.' +
+        (sched ? ' Type a date and time below to book anyway.' : ' Try a shorter meeting, or contact ' + esc(CFG.schedulerName) + '.'));
+      return;
+    }
+    var html = '<div class="days" id="b-days">' + st.days.map(function (d) {
+      var why = d.skip === 'full' ? 'Fully booked' : d.skip === 'closed' ? 'Closed for team bookings' : 'No free time';
+      return '<button class="day' + (d.key === st.day ? ' on' : '') + '" data-day="' + d.key + '"' +
+        (d.slots.length ? '' : ' disabled title="' + why + '"') + '><span class="small">' + esc(d.dow) + '</span><b>' + d.dnum +
+        '</b><span class="small">' + esc(d.mon) + '</span></button>';
+    }).join('') + '</div>';
+    var day = st.days.filter(function (d) { return d.key === st.day; })[0];
+    html += '<div class="slots" id="b-slots">' + day.slots.map(function (s) {
+      return '<button class="slot' + (s.t === st.slot ? ' on' : '') + '" data-t="' + s.t + '">' + esc(s.label) + '</button>';
+    }).join('') + '</div>';
+    el.innerHTML = html;
+    $('b-days').onclick = function (e) {
+      var b = e.target.closest('[data-day]');
+      if (!b || b.disabled) return;
+      st.day = b.getAttribute('data-day'); st.slot = null; drawDays();
+    };
+    $('b-slots').onclick = function (e) {
+      var b = e.target.closest('[data-t]');
+      if (!b) return;
+      st.slot = +b.getAttribute('data-t');
+      each(this.children, function (c) { c.classList.toggle('on', c === b); });
+    };
+  }
+
+  function typeChanged() {
+    var v = $('b-type').value;
+    $('b-link-wrap').classList.toggle('hidden', v !== 'link' && v !== 'phone');
+    $('b-link-label').textContent = v === 'phone' ? 'Phone number to call' : 'Meeting link';
+    $('b-link').placeholder = v === 'phone' ? '+91 …' : 'https://';
+  }
+
+  function submit(force) {
+    var msg = $('b-msg');
+    var p = {
+      founders: st.keys, duration: st.dur, topic: $('b-topic').value, agenda: $('b-agenda').value,
+      type: $('b-type').value, link: $('b-link').value, others: $('b-others').value, name: $('b-name').value, email: $('b-email').value
+    };
+    if (sched) {
+      p.inviteFounders = $('b-invite').checked;
+      p.force = !!force;
+      if ($('b-custom').open && $('b-cdate').value && $('b-ctime').value) { p.date = $('b-cdate').value; p.time = $('b-ctime').value; }
+    } else {
+      p.team = $('b-team').value;
+    }
+    if (!st.keys.length) { msg.innerHTML = note('err', 'Choose who the meeting is with.'); return; }
+    if (!p.date && !st.slot) { msg.innerHTML = note('err', 'Pick a time.'); return; }
+    if (!p.date) p.start = st.slot;
+    if (!sched) { store('name', p.name); store('email', p.email); store('team', p.team); }
+    var btn = $('b-go');
+    btn.disabled = true; btn.textContent = 'Booking…'; msg.innerHTML = '';
+    call('book', p).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Book';
+      if (res.error) { msg.innerHTML = note('err', esc(res.error)); if (res.refresh) loadSlots(); return; }
+      if (res.conflict) {
+        msg.innerHTML = note('err', '<b>This clashes with:</b><br>' + res.clashes.map(function (c) {
+          return esc(c.with + ' · ' + c.when + ' · ' + c.title);
+        }).join('<br>') + '<br><button class="btn" id="b-force">Book anyway</button>');
+        $('b-force').onclick = function () { submit(true); };
+        return;
+      }
+      done(res);
+    });
+  }
+
+  function done(res) {
+    var where = res.joinUrl ? '<a href="' + esc(res.joinUrl) + '" target="_blank" rel="noopener">' + esc(res.joinUrl) + '</a>' : esc(res.location);
+    root.innerHTML = '<section class="card">' +
+      note('ok', '<b>Booked.</b> ' + (res.invited ? (sched ? 'Invites are on their way.' : 'A calendar invite is on its way to you and ' + esc(res.with) + '.') : 'It is on the calendar. No invite went to the founders.')) +
+      '<h2 style="margin-top:14px">' + esc(res.topic || res.title) + '</h2>' +
+      '<p>' + esc(res.when) + ' with ' + esc(res.with) + '</p>' +
+      '<p class="muted">' + esc(res.meeting) + (where ? ' · ' + where : '') + '</p>' +
+      (res.cancelUrl ? '<p class="small">Need to cancel? <a href="' + esc(res.cancelUrl) + '" target="_blank" rel="noopener">Use this link</a>. It is in the invite too.</p>' : '') +
+      '<button class="btn ghost" id="b-again">Book another</button></section>';
+    $('b-again').onclick = function () { bookView(root, mode); };
+  }
+
+  pickWho($('b-who'), function (keys) { st.keys = keys; loadSlots(); });
+  $('b-dur').onclick = function (e) {
+    var b = e.target.closest('[data-dur]');
+    if (!b) return;
+    st.dur = +b.getAttribute('data-dur');
+    if ($('b-durx')) $('b-durx').value = '';
+    each(this.children, function (c) { c.classList.toggle('on', c === b); });
+    loadSlots();
+  };
+  if ($('b-durx')) $('b-durx').onchange = function () {
+    var v = Math.round(+this.value);
+    if (v >= 5 && v <= 720) { st.dur = v; each($('b-dur').children, function (c) { c.classList.remove('on'); }); loadSlots(); }
+  };
+  $('b-type').onchange = typeChanged;
+  $('b-go').onclick = function () { submit(false); };
+}
+
+/* ---------- Block time (founder and scheduler) ---------- */
+
+function blockView(root, mode) {
+  var sched = mode === 'scheduler';
+  var keys = sched ? [] : [CFG.founder.key];
+  var reasons = CFG.reasons.map(function (r) { return '<option>' + esc(r) + '</option>'; }).join('');
+  root.innerHTML = '<section class="card">' +
+    (sched ? '<label style="margin-top:0">Whose time?</label><div class="chips" id="k-who">' + whoChips(true) + '</div>' : '') +
+    '<div class="row2"><div><label for="k-date">Date</label><input type="date" id="k-date" value="' + esc(CFG.today) + '" min="' + esc(CFG.today) + '"></div>' +
+    '<div><label class="check" style="margin-top:36px"><input type="checkbox" id="k-all"> All day</label></div></div>' +
+    '<div class="row2" id="k-times"><div><label for="k-from">From</label><input type="time" id="k-from" step="900" value="10:00"></div>' +
+    '<div><label for="k-to">To</label><input type="time" id="k-to" step="900" value="11:00"></div></div>' +
+    '<div class="hidden" id="k-until"><label for="k-date2">Last day (leave empty for one day)</label><input type="date" id="k-date2" min="' + esc(CFG.today) + '"></div>' +
+    '<label for="k-reason">Reason</label><select id="k-reason">' + reasons + '</select>' +
+    '<label for="k-note">Note (optional)</label><input id="k-note" maxlength="300" placeholder="Shows on the calendar entry only">' +
+    '<label class="check"><input type="checkbox" id="k-outlook"' + (sched ? '' : ' checked') + '> ' +
+    (sched ? 'Send an invite so it also shows in their Outlook' : 'Also put it in my Outlook (sends me an invite)') + '</label>' +
+    '<div id="k-msg"></div><button class="btn" id="k-go">Block this time</button></section>';
+  if (sched) pickWho($('k-who'), function (k) { keys = k; });
+  $('k-all').onchange = function () {
+    $('k-times').classList.toggle('hidden', this.checked);
+    $('k-until').classList.toggle('hidden', !this.checked);
+  };
+  $('k-go').onclick = function () {
+    var msg = $('k-msg'), btn = this;
+    if (!keys.length) { msg.innerHTML = note('err', 'Choose whose time to block.'); return; }
+    var p = {
+      founders: keys, date: $('k-date').value, allDay: $('k-all').checked, dateTo: $('k-date2').value,
+      from: $('k-from').value, to: $('k-to').value, reason: $('k-reason').value, note: $('k-note').value, toOutlook: $('k-outlook').checked
+    };
+    btn.disabled = true; btn.textContent = 'Blocking…'; msg.innerHTML = '';
+    call('block', p).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Block this time';
+      if (res.error) { msg.innerHTML = note('err', esc(res.error)); return; }
+      msg.innerHTML = note('ok', '<b>Blocked:</b> ' + esc(res.when) + (sched ? ' for ' + esc(res.with) : '') + ' (' + esc(res.reason) + ').' +
+        (res.toOutlook ? ' An invite is on its way so it shows in Outlook.' : '') + ' Nobody can book over it.');
+      $('k-note').value = '';
+    });
+  };
+}
+
+/* ---------- Upcoming (founder and scheduler) ---------- */
+
+function upcomingView(root) {
+  root.innerHTML = '<section class="card"><div id="u-list" class="spinner">Loading…</div></section>';
+  call('upcoming').then(function (res) {
+    var el = $('u-list');
+    el.className = '';
+    if (res.error) { el.innerHTML = note('err', esc(res.error)); return; }
+    if (!res.items.length) { el.innerHTML = '<p class="muted">Nothing on the calendar for the next two weeks.</p>'; return; }
+    var html = '', lastDay = '';
+    res.items.forEach(function (it) {
+      if (it.day !== lastDay) { html += '<h3 class="dayhead">' + esc(it.dayLabel) + '</h3>'; lastDay = it.day; }
+      html += '<div class="item"><div class="time">' + esc(it.time) + '</div><div>' +
+        '<div><b>' + esc(it.title) + '</b>' + (CFG.mode === 'scheduler' ? '<span class="tag">' + esc(it.with) + '</span>' : '') + '<span class="tag">' + esc(it.type) + '</span></div>' +
+        (it.by ? '<div class="muted small">' + esc(it.by) + '</div>' : '') +
+        (it.agenda ? '<div class="small">' + esc(it.agenda) + '</div>' : '') +
+        (it.location ? '<div class="muted small">' + esc(it.location) + '</div>' : '') +
+        (it.joinUrl ? '<div class="small"><a href="' + esc(it.joinUrl) + '" target="_blank" rel="noopener">' + esc(it.joinLabel || 'Join') + '</a></div>' : '') +
+        (it.reply ? '<div class="muted small">Replies: ' + esc(it.reply) + '</div>' : '') +
+        (it.canCancel ? '<div class="small" style="margin-top:4px"><button class="linkbtn" data-cancel="' + esc(it.id) + '">Cancel</button></div>' : '') +
+        '</div></div>';
+    });
+    el.innerHTML = html;
+    el.onclick = function (e) {
+      var b = e.target.closest('[data-cancel]');
+      if (!b || b.disabled) return;
+      if (b.getAttribute('data-sure') !== '1') {
+        b.setAttribute('data-sure', '1');
+        b.textContent = 'Tap again to cancel it (guests are told)';
+        return;
+      }
+      b.disabled = true; b.textContent = 'Cancelling…';
+      call('cancelEvent', { id: b.getAttribute('data-cancel') }).then(function (r) {
+        var box = b.parentNode;
+        if (r.error) { box.innerHTML = note('err', esc(r.error)); return; }
+        b.closest('.item').classList.add('gone');
+        box.innerHTML = '<span class="muted">Cancelled</span>';
+      });
+    };
+  });
+}
+
+/* ---------- Cancel link ---------- */
+
+function cancelView() {
+  setHead('Cancel a booking', '');
+  $('app').innerHTML = '<section class="card"><div id="c-box" class="spinner">Loading…</div></section>';
+  call('cancelInfo', { token: BOOT.token }).then(function (r) {
+    var box = $('c-box');
+    box.className = '';
+    if (r.error) { box.innerHTML = note('err', esc(r.error)); return; }
+    var head = '<h2>' + esc(r.title) + '</h2><p>' + esc(r.when) + ' with ' + esc(r.with) + '</p>';
+    if (!r.active) {
+      box.innerHTML = head + note('info', r.status === 'Confirmed' ? 'This meeting has already happened.' : 'This booking is already ' + esc(String(r.status).toLowerCase()) + '.');
+      return;
+    }
+    box.innerHTML = head + '<p class="muted">Cancelling takes it off everyone\'s calendar and tells the other guests.</p><div id="c-msg"></div><button class="btn" id="c-go">Cancel this booking</button>';
+    $('c-go').onclick = function () {
+      var btn = this;
+      btn.disabled = true; btn.textContent = 'Cancelling…';
+      call('cancelByToken', { token: BOOT.token }).then(function (x) {
+        if (x.error) { $('c-msg').innerHTML = note('err', esc(x.error)); btn.disabled = false; btn.textContent = 'Cancel this booking'; return; }
+        box.innerHTML = head + note('ok', x.already ? 'This booking was already cancelled.' : 'Cancelled. Everyone invited has been told.');
+      });
+    };
+  });
+}
+
+/* ---------- Start ---------- */
+
+function teamFooter() {
+  var h = CFG.noticeHours;
+  return '<p><b>When the team can book</b><br>' + CFG.hoursText.map(esc).join('<br>') + '</p>' +
+    '<p>Book at least ' + h + ' hour' + (h === 1 ? '' : 's') + ' ahead and up to ' + CFG.horizonDays + ' days out. Each founder takes up to ' +
+    CFG.dailyCap + ' team bookings a day.</p>' +
+    '<p>For anything else, or for meetings with people outside the team, contact ' + esc(CFG.schedulerName) +
+    (CFG.schedulerEmail ? ' (<a href="mailto:' + esc(CFG.schedulerEmail) + '">' + esc(CFG.schedulerEmail) + '</a>)' : '') + '.</p>';
+}
+
+function start() {
+  if (BOOT.mode === 'cancel') { cancelView(); return; }
+  if (['team', 'scheduler', 'founder', 'check'].indexOf(BOOT.mode) < 0) {
+    setHead(BOOT.mode === 'error' ? 'Something went wrong' : 'This link is not valid', '');
+    $('app').innerHTML = note('info', BOOT.mode === 'error'
+      ? 'The calendar could not load. Please try again in a few minutes.'
+      : 'Ask ' + esc(BOOT.schedulerName) + ' for the current link.');
+    return;
+  }
+  call('config').then(function (cfg) {
+    if (cfg.error) { setHead(/not valid/i.test(cfg.error) ? 'This link is not valid' : "Founders' Calendar", ''); $('app').innerHTML = note('err', esc(cfg.error)); return; }
+    CFG = cfg;
+    if (cfg.mode === 'team') {
+      setHead('Book time with the founders', 'Pick who you need, how long, and a free slot. You and the founder get a calendar invite straight away.');
+      bookView($('app'), 'team');
+      $('foot').innerHTML = teamFooter();
+    } else if (cfg.mode === 'scheduler') {
+      setHead("Founders' Calendar", "Book or block any time. The team's rules don't apply here.");
+      tabs([
+        { label: 'Book a meeting', render: function (el) { bookView(el, 'scheduler'); } },
+        { label: 'Block time', render: function (el) { blockView(el, 'scheduler'); } },
+        { label: 'Upcoming', render: upcomingView }
+      ]);
+    } else {
+      setHead(cfg.founder.first + "'s calendar", 'Block time, and see what is booked for the next two weeks.');
+      tabs([
+        { label: 'Block time', render: function (el) { blockView(el, 'founder'); } },
+        { label: 'Upcoming', render: upcomingView }
+      ]);
+    }
+  });
+}
+
+start();
+</script>
+</body>
+</html>
